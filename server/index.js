@@ -4,6 +4,7 @@ const cors = require('cors');
 const { createServer } = require('http');
 const { Server } = require('socket.io');
 const errorHandler = require('./middleware/error');
+const authRoutes = require('./routes/auth');
 
 const app = express();
 const httpServer = createServer(app);
@@ -21,6 +22,8 @@ app.use(express.json());
 app.get('/health', (req, res) => {
   res.json({ status: 'ok' });
 });
+
+app.use('/auth', authRoutes);
 
 app.use(errorHandler);
 
