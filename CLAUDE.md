@@ -193,16 +193,13 @@ If everyone in the room picked the same team for a game, that game produces zero
 
 ---
 
-## API-Sports Integration
+## NBA Data Source
 
-- Base URL: https://v1.basketball.api-sports.io
-- Auth header: x-apisports-key: YOUR_KEY
-- NBA league ID: 12, season: 2024
-- Key endpoints:
-  - GET /games?league=12&season=2024 — list of NBA games
-  - GET /games?id={id} — single game with live score
-- Poll every 30 seconds, only games where status = live
-- On data change, update DB and broadcast via Socket.io
+- URL: https://cdn.nba.com/static/json/liveData/scoreboard/todaysScoreboard_00.json
+- No auth required — public NBA CDN endpoint
+- Always returns today's games with live scores
+- gameStatus: 1 = scheduled, 2 = live, 3 = finished
+- Poll every 30 seconds — one call fetches all games, update DB and broadcast via Socket.io
 
 ---
 
