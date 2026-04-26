@@ -110,15 +110,21 @@ export default function DashboardPage() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [games, setGames] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [gamesLoading, setGamesLoading] = useState(true);
+  const [gamesError, setGamesError] = useState(null);
+  const [myRooms, setMyRooms] = useState([]);
+  const [roomsLoading, setRoomsLoading] = useState(true);
   const [modalGame, setModalGame] = useState(null);
 
   useEffect(() => {
     api.get('/games')
       .then((res) => setGames(res.data))
-      .catch(() => setError('Failed to load games.'))
-      .finally(() => setLoading(false));
+      .catch(() => setGamesError('Failed to load games.'))
+      .finally(() => setGamesLoading(false));
+
+    api.get('/rooms/my')
+      .then((res) => setMyRooms(res.data))
+      .finally(() => setRoomsLoading(false));
   }, []);
 
   function handleLogout() {
@@ -143,70 +149,109 @@ export default function DashboardPage() {
         </div>
       </header>
 
-      <main className="max-w-2xl mx-auto px-6 py-8">
-        <h2 className="text-2xl font-bold mb-6">Today's Games</h2>
+      <main className="max-w-2xl mx-auto px-6 py-8 flex flex-col gap-10">
 
-        {loading && (
-          <div className="flex flex-col gap-3">
-            {[1, 2, 3].map((i) => <GameCardSkeleton key={i} />)}
-          </div>
+        {/* My Rooms */}
+        {(roomsLoading || myRooms.length > 0) && (
+          <section>
+            <h2 className="text-2xl font-bold mb-4">My Rooms</h2>
+            {roomsLoading ? (
+              <div className="flex flex-col gap-3">
+                {[1, 2].map((i) => <GameCardSkeleton key={i} />)}
+              </div>
+            ) : (
+              <div className="flex flex-col gap-3">
+                {myRooms.map((room) => (
+                  <button
+                    key={room.id}
+                    onClick={() => navigate(`/rooms/${room.id}`)}
+                    className="bg-white/5 border border-white/10 rounded-xl p-4 text-left hover:bg-white/8 transition-colors w-full"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="font-semibold">{room.name}</span>
+                      <StatusBadge status={room.game_status} />
+                    </div>
+                    <div className="mt-1.5 flex items-center gap-3 text-sm text-white/40">
+                      <span>{room.away_team} @ {room.home_team}</span>
+                      <span>·</span>
+                      <span>{room.member_count} {room.member_count === 1 ? 'member' : 'members'}</span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </section>
         )}
 
-        {error && (
-          <div className="bg-red-500/10 border border-red-500/30 text-red-400 rounded-xl px-4 py-3 text-sm">
-            {error}
-          </div>
-        )}
+        {/* Today's Games */}
+        <section>
+          <h2 className="text-2xl font-bold mb-4">Today's Games</h2>
 
-        {!loading && !error && games.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-20 text-white/40">
-            <span className="text-5xl mb-4">🏀</span>
-            <p className="text-lg font-medium">No games today</p>
-            <p className="text-sm mt-1">Check back later or sync games via the admin endpoint.</p>
-          </div>
-        )}
+          {gamesLoading && (
+            <div className="flex flex-col gap-3">
+              {[1, 2, 3].map((i) => <GameCardSkeleton key={i} />)}
+            </div>
+          )}
 
-        {!loading && !error && games.length > 0 && (
-          <div className="flex flex-col gap-3">
-            {games.map((game) => (
-              <div key={game.id} className="bg-white/5 border border-white/10 rounded-xl p-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <span className="font-semibold">{game.away_team}</span>
-                    <span className="text-white/40 text-sm">@</span>
-                    <span className="font-semibold">{game.home_team}</span>
-                    {game.status !== 'scheduled' && (
-                      <span className="text-white/60 text-sm font-mono">
-                        {game.away_score} – {game.home_score}
-                      </span>
+          {gamesError && (
+            <div className="bg-red-500/10 border border-red-500/30 text-red-400 rounded-xl px-4 py-3 text-sm">
+              {gamesError}
+            </div>
+          )}
+
+          {!gamesLoading && !gamesError && games.length === 0 && (
+            <div className="flex flex-col items-center justify-center py-20 text-white/40">
+              <span className="text-5xl mb-4">🏀</span>
+              <p className="text-lg font-medium">No games today</p>
+              <p className="text-sm mt-1">Check back later or sync games via the admin endpoint.</p>
+            </div>
+          )}
+
+          {!gamesLoading && !gamesError && games.length > 0 && (
+            <div className="flex flex-col gap-3">
+              {games.map((game) => (
+                <div key={game.id} className="bg-white/5 border border-white/10 rounded-xl p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <span className="font-semibold">{game.away_team}</span>
+                      <span className="text-white/40 text-sm">@</span>
+                      <span className="font-semibold">{game.home_team}</span>
+                      {game.status !== 'scheduled' && (
+                        <span className="text-white/60 text-sm font-mono">
+                          {game.away_score} – {game.home_score}
+                        </span>
+                      )}
+                    </div>
+                    <StatusBadge status={game.status} />
+                  </div>
+                  <div className="mt-3 flex items-center justify-between">
+                    <span className="text-white/40 text-sm">
+                      {game.status === 'scheduled' ? formatTime(game.starts_at) : null}
+                    </span>
+                    {game.status === 'scheduled' && (
+                      <button
+                        onClick={() => setModalGame(game)}
+                        className="bg-[#00ff87] text-[#0a0f1e] text-sm font-semibold px-3 py-1 rounded-lg hover:bg-[#00e87a] transition-colors"
+                      >
+                        Create Room
+                      </button>
                     )}
                   </div>
-                  <StatusBadge status={game.status} />
                 </div>
-                <div className="mt-3 flex items-center justify-between">
-                  <span className="text-white/40 text-sm">
-                    {game.status === 'scheduled' ? formatTime(game.starts_at) : null}
-                  </span>
-                  {game.status === 'scheduled' && (
-                    <button
-                      onClick={() => setModalGame(game)}
-                      className="bg-[#00ff87] text-[#0a0f1e] text-sm font-semibold px-3 py-1 rounded-lg hover:bg-[#00e87a] transition-colors"
-                    >
-                      Create Room
-                    </button>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+              ))}
+            </div>
+          )}
+        </section>
       </main>
 
       {modalGame && (
         <CreateRoomModal
           game={modalGame}
           onClose={() => setModalGame(null)}
-          onCreated={(roomId) => navigate(`/rooms/${roomId}`)}
+          onCreated={(roomId) => {
+            api.get('/rooms/my').then((res) => setMyRooms(res.data));
+            navigate(`/rooms/${roomId}`);
+          }}
         />
       )}
     </div>
