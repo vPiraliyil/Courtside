@@ -6,6 +6,7 @@ const { Server } = require('socket.io');
 const errorHandler = require('./middleware/error');
 const authRoutes = require('./routes/auth');
 const gameRoutes = require('./routes/games');
+const roomRoutes = require('./routes/rooms');
 
 const app = express();
 const httpServer = createServer(app);
@@ -26,6 +27,7 @@ app.get('/health', (req, res) => {
 
 app.use('/auth', authRoutes);
 app.use('/', gameRoutes);
+app.use('/rooms', roomRoutes);
 
 app.use(errorHandler);
 

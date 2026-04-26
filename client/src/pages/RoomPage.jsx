@@ -1,0 +1,172 @@
+import { useEffect, useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import api from '../lib/api';
+
+function copyToClipboard(text) {
+  navigator.clipboard.writeText(text).catch(() => {});
+}
+
+export default function RoomPage() {
+  const { id } = useParams();
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
+  const [room, setRoom] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [copied, setCopied] = useState(false);
+  const [stake, setStake] = useState('');
+  const [savingStake, setSavingStake] = useState(false);
+  const [stakeError, setStakeError] = useState(null);
+
+  useEffect(() => {
+    api.get(`/rooms/${id}`)
+      .then((res) => setRoom(res.data))
+      .catch((err) => setError(err.response?.data?.error || 'Failed to load room'))
+      .finally(() => setLoading(false));
+  }, [id]);
+
+  const inviteLink = `${window.location.origin}/join/${room?.invite_code}`;
+  const myMember = room?.members?.find((m) => m.user_id === user?.id);
+  const needsStake = myMember && Number(myMember.stake) === 0;
+
+  function handleCopy() {
+    copyToClipboard(inviteLink);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
+
+  async function handleStakeSave(e) {
+    e.preventDefault();
+    const val = parseFloat(stake);
+    if (!val || val <= 0) return;
+    setSavingStake(true);
+    setStakeError(null);
+    try {
+      await api.patch(`/rooms/${id}/stake`, { stake: val });
+      setRoom((prev) => ({
+        ...prev,
+        members: prev.members.map((m) =>
+          m.user_id === user.id ? { ...m, stake: val } : m
+        ),
+      }));
+      setStake('');
+    } catch (err) {
+      setStakeError(err.response?.data?.error || 'Failed to update stake');
+    } finally {
+      setSavingStake(false);
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#0a0f1e] flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-[#00ff87] border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-[#0a0f1e] flex flex-col items-center justify-center gap-4">
+        <p className="text-red-400">{error}</p>
+        <button onClick={() => navigate('/dashboard')} className="text-white/40 text-sm hover:text-white/60">
+          Back to dashboard
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-[#0a0f1e] text-white">
+      <header className="flex items-center justify-between px-6 py-4 border-b border-white/10">
+        <button
+          onClick={() => navigate('/dashboard')}
+          className="text-white/40 text-sm hover:text-white/60 transition-colors"
+        >
+          ← Dashboard
+        </button>
+        <span className="text-xl font-bold tracking-tight">
+          Court<span className="text-[#00ff87]">side</span>
+        </span>
+        <div className="w-24" />
+      </header>
+
+      <main className="max-w-2xl mx-auto px-6 py-8 flex flex-col gap-6">
+        {/* Room header */}
+        <div>
+          <h1 className="text-3xl font-bold">{room.name}</h1>
+          <p className="text-white/50 mt-1">
+            {room.away_team} @ {room.home_team}
+          </p>
+        </div>
+
+        {/* Stake banner */}
+        {needsStake && (
+          <div className="bg-[#00ff87]/10 border border-[#00ff87]/30 rounded-xl px-4 py-4">
+            <p className="text-[#00ff87] font-semibold mb-3">You haven't set your stake yet</p>
+            <form onSubmit={handleStakeSave} className="flex gap-2">
+              <input
+                type="number"
+                min="0.01"
+                step="0.01"
+                value={stake}
+                onChange={(e) => setStake(e.target.value)}
+                placeholder="Enter amount ($)"
+                className="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white placeholder-white/30 focus:outline-none focus:border-[#00ff87]/50"
+              />
+              <button
+                type="submit"
+                disabled={savingStake || !stake}
+                className="bg-[#00ff87] text-[#0a0f1e] font-semibold px-4 py-2 rounded-lg hover:bg-[#00e87a] transition-colors disabled:opacity-50"
+              >
+                {savingStake ? 'Saving…' : 'Set Stake'}
+              </button>
+            </form>
+            {stakeError && <p className="text-red-400 text-sm mt-2">{stakeError}</p>}
+          </div>
+        )}
+
+        {/* Invite link */}
+        <div className="bg-white/5 border border-white/10 rounded-xl p-4">
+          <p className="text-white/50 text-sm mb-2">Invite link</p>
+          <div className="flex items-center gap-2">
+            <span className="flex-1 text-sm text-white/80 bg-white/5 rounded-lg px-3 py-2 truncate font-mono">
+              {inviteLink}
+            </span>
+            <button
+              onClick={handleCopy}
+              className="bg-white/10 text-white text-sm px-3 py-2 rounded-lg hover:bg-white/20 transition-colors whitespace-nowrap"
+            >
+              {copied ? 'Copied!' : 'Copy'}
+            </button>
+          </div>
+        </div>
+
+        {/* Members */}
+        <div className="bg-white/5 border border-white/10 rounded-xl p-4">
+          <p className="text-white/50 text-sm mb-3">Members ({room.members.length})</p>
+          <div className="flex flex-col gap-2">
+            {room.members.map((m) => (
+              <div key={m.user_id} className="flex items-center justify-between py-2 border-b border-white/5 last:border-0">
+                <div className="flex items-center gap-2">
+                  <span className="font-medium">{m.username}</span>
+                  {m.user_id === user?.id && (
+                    <span className="text-xs text-white/30 bg-white/5 px-1.5 py-0.5 rounded">you</span>
+                  )}
+                  {m.user_id === room.created_by && (
+                    <span className="text-xs text-[#00ff87]/60 bg-[#00ff87]/10 px-1.5 py-0.5 rounded">host</span>
+                  )}
+                </div>
+                <span className={`text-sm font-mono ${Number(m.stake) === 0 ? 'text-white/30' : 'text-white/70'}`}>
+                  {Number(m.stake) === 0 ? 'No stake' : `$${Number(m.stake).toFixed(2)}`}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+}

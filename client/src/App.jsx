@@ -4,6 +4,8 @@ import ProtectedRoute from './components/ProtectedRoute';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import DashboardPage from './pages/DashboardPage';
+import RoomPage from './pages/RoomPage';
+import JoinPage from './pages/JoinPage';
 
 export default function App() {
   return (
@@ -18,6 +20,22 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <DashboardPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/rooms/:id"
+            element={
+              <ProtectedRoute>
+                <RoomPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/join/:inviteCode"
+            element={
+              <ProtectedRoute>
+                <JoinPage />
               </ProtectedRoute>
             }
           />

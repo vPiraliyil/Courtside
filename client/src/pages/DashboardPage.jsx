@@ -33,12 +33,86 @@ function formatTime(startsAt) {
   return new Date(startsAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
 
+function CreateRoomModal({ game, onClose, onCreated }) {
+  const [name, setName] = useState('');
+  const [creating, setCreating] = useState(false);
+  const [error, setError] = useState(null);
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    if (!name.trim()) return;
+    setCreating(true);
+    setError(null);
+    try {
+      const { data } = await api.post('/rooms', { gameId: game.id, name: name.trim() });
+      onCreated(data.id);
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to create room');
+      setCreating(false);
+    }
+  }
+
+  return (
+    <div
+      className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 px-4"
+      onClick={onClose}
+    >
+      <div
+        className="bg-[#0f1629] border border-white/10 rounded-2xl p-6 w-full max-w-md"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h3 className="text-lg font-bold text-white mb-1">Create a Room</h3>
+        <p className="text-white/40 text-sm mb-5">
+          {game.away_team} @ {game.home_team}
+        </p>
+
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          <div>
+            <label className="block text-sm text-white/60 mb-1.5">Room name</label>
+            <input
+              autoFocus
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="e.g. Friday Night Picks"
+              maxLength={100}
+              className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white placeholder-white/30 focus:outline-none focus:border-[#00ff87]/50"
+            />
+          </div>
+
+          {error && (
+            <p className="text-red-400 text-sm">{error}</p>
+          )}
+
+          <div className="flex gap-3 pt-1">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 bg-white/10 text-white py-2 rounded-lg hover:bg-white/15 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={creating || !name.trim()}
+              className="flex-1 bg-[#00ff87] text-[#0a0f1e] font-semibold py-2 rounded-lg hover:bg-[#00e87a] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {creating ? 'Creating…' : 'Create'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 export default function DashboardPage() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [games, setGames] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [modalGame, setModalGame] = useState(null);
 
   useEffect(() => {
     api.get('/games')
@@ -95,7 +169,7 @@ export default function DashboardPage() {
         {!loading && !error && games.length > 0 && (
           <div className="flex flex-col gap-3">
             {games.map((game) => (
-              <div key={game.id} className="bg-white/5 border border-white/10 rounded-xl p-4 hover:bg-white/8 transition-colors">
+              <div key={game.id} className="bg-white/5 border border-white/10 rounded-xl p-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <span className="font-semibold">{game.away_team}</span>
@@ -109,14 +183,32 @@ export default function DashboardPage() {
                   </div>
                   <StatusBadge status={game.status} />
                 </div>
-                <div className="mt-2 text-white/40 text-sm">
-                  {game.status === 'scheduled' ? formatTime(game.starts_at) : null}
+                <div className="mt-3 flex items-center justify-between">
+                  <span className="text-white/40 text-sm">
+                    {game.status === 'scheduled' ? formatTime(game.starts_at) : null}
+                  </span>
+                  {game.status === 'scheduled' && (
+                    <button
+                      onClick={() => setModalGame(game)}
+                      className="bg-[#00ff87] text-[#0a0f1e] text-sm font-semibold px-3 py-1 rounded-lg hover:bg-[#00e87a] transition-colors"
+                    >
+                      Create Room
+                    </button>
+                  )}
                 </div>
               </div>
             ))}
           </div>
         )}
       </main>
+
+      {modalGame && (
+        <CreateRoomModal
+          game={modalGame}
+          onClose={() => setModalGame(null)}
+          onCreated={(roomId) => navigate(`/rooms/${roomId}`)}
+        />
+      )}
     </div>
   );
 }
