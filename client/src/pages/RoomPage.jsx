@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useSocket } from '../context/SocketContext';
 import api from '../lib/api';
 
 function copyToClipboard(text) {
@@ -10,6 +11,7 @@ function copyToClipboard(text) {
 export default function RoomPage() {
   const { id } = useParams();
   const { user } = useAuth();
+  const socket = useSocket();
   const navigate = useNavigate();
 
   const [room, setRoom] = useState(null);
@@ -22,6 +24,7 @@ export default function RoomPage() {
   const [picks, setPicks] = useState([]);
   const [submitting, setSubmitting] = useState(false);
   const [pickError, setPickError] = useState(null);
+  const [settlements, setSettlements] = useState(null);
 
   useEffect(() => {
     Promise.all([
@@ -35,6 +38,39 @@ export default function RoomPage() {
       .catch((err) => setError(err.response?.data?.error || 'Failed to load room'))
       .finally(() => setLoading(false));
   }, [id]);
+
+  useEffect(() => {
+    if (!socket || !room) return;
+    socket.emit('join:room', { roomId: id });
+
+    const onScore = ({ gameId, homeScore, awayScore, status }) => {
+      if (gameId !== room.game_id) return;
+      setRoom((prev) => ({
+        ...prev,
+        home_score: homeScore,
+        away_score: awayScore,
+        game_status: status,
+      }));
+    };
+    const onFinished = ({ gameId, winner }) => {
+      if (gameId !== room.game_id) return;
+      setRoom((prev) => ({ ...prev, game_status: 'finished', winner }));
+    };
+    const onSettlement = ({ roomId, settlements }) => {
+      if (roomId !== id) return;
+      setSettlements(settlements);
+    };
+
+    socket.on('score:update', onScore);
+    socket.on('game:finished', onFinished);
+    socket.on('settlement:ready', onSettlement);
+    return () => {
+      socket.off('score:update', onScore);
+      socket.off('game:finished', onFinished);
+      socket.off('settlement:ready', onSettlement);
+      socket.emit('leave:room', { roomId: id });
+    };
+  }, [socket, room?.game_id, id]);
 
   const inviteLink = `${window.location.origin}/join/${room?.invite_code}`;
   const myMember = room?.members?.find((m) => m.user_id === user?.id);
@@ -126,6 +162,51 @@ export default function RoomPage() {
             {room.away_team} @ {room.home_team}
           </p>
         </div>
+
+        {/* Live scoreboard */}
+        <div className="bg-white/5 border border-white/10 rounded-xl p-5">
+          <div className="flex items-center justify-between">
+            <div className="flex flex-col items-center flex-1">
+              <span className="text-white/60 text-sm mb-1">{room.away_team}</span>
+              <span className="text-4xl font-bold font-mono">{room.away_score ?? 0}</span>
+            </div>
+            <div className="flex flex-col items-center px-3">
+              <span className={`text-xs font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full ${
+                room.game_status === 'live'
+                  ? 'bg-[#00ff87]/20 text-[#00ff87] border border-[#00ff87]/40'
+                  : room.game_status === 'finished'
+                  ? 'bg-white/5 text-white/40 border border-white/10'
+                  : 'bg-white/10 text-white/60 border border-white/20'
+              }`}>
+                {room.game_status === 'live' ? 'Live' : room.game_status === 'finished' ? 'Final' : 'Scheduled'}
+              </span>
+            </div>
+            <div className="flex flex-col items-center flex-1">
+              <span className="text-white/60 text-sm mb-1">{room.home_team}</span>
+              <span className="text-4xl font-bold font-mono">{room.home_score ?? 0}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Game-over banner */}
+        {room.game_status === 'finished' && room.winner && (
+          <div className="bg-[#00ff87]/10 border border-[#00ff87]/30 rounded-xl px-4 py-4 text-center">
+            <p className="text-white/60 text-sm uppercase tracking-wider">Game Over</p>
+            <p className="text-[#00ff87] text-xl font-bold mt-1">{room.winner} win</p>
+          </div>
+        )}
+
+        {/* Settlement banner (placeholder until settlement screen is built) */}
+        {settlements && (
+          <div className="bg-white/5 border border-[#00ff87]/30 rounded-xl px-4 py-4">
+            <p className="text-[#00ff87] font-semibold mb-1">Settlement ready</p>
+            <p className="text-white/60 text-sm">
+              {settlements.length === 0
+                ? 'No transfers needed (no contest).'
+                : `${settlements.length} transfer${settlements.length === 1 ? '' : 's'} to settle the room.`}
+            </p>
+          </div>
+        )}
 
         {/* Stake banner */}
         {needsStake && (

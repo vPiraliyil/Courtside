@@ -1,6 +1,7 @@
 const { Router } = require('express');
 const pool = require('../db/index');
 const { syncTodaysGames } = require('../services/gameSync');
+const { pollOnce } = require('../services/pollService');
 
 const router = Router();
 
@@ -8,6 +9,15 @@ router.post('/admin/sync-games', async (req, res, next) => {
   try {
     const count = await syncTodaysGames();
     res.json({ synced: count });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.post('/admin/poll-tick', async (req, res, next) => {
+  try {
+    await pollOnce();
+    res.json({ ok: true });
   } catch (err) {
     next(err);
   }
