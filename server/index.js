@@ -7,6 +7,7 @@ const errorHandler = require('./middleware/error');
 const authRoutes = require('./routes/auth');
 const gameRoutes = require('./routes/games');
 const roomRoutes = require('./routes/rooms');
+const pickRoutes = require('./routes/picks');
 
 const app = express();
 const httpServer = createServer(app);
@@ -28,6 +29,7 @@ app.get('/health', (req, res) => {
 app.use('/auth', authRoutes);
 app.use('/', gameRoutes);
 app.use('/rooms', roomRoutes);
+app.use('/picks', pickRoutes);
 
 app.use(errorHandler);
 

@@ -19,10 +19,19 @@ export default function RoomPage() {
   const [stake, setStake] = useState('');
   const [savingStake, setSavingStake] = useState(false);
   const [stakeError, setStakeError] = useState(null);
+  const [picks, setPicks] = useState([]);
+  const [submitting, setSubmitting] = useState(false);
+  const [pickError, setPickError] = useState(null);
 
   useEffect(() => {
-    api.get(`/rooms/${id}`)
-      .then((res) => setRoom(res.data))
+    Promise.all([
+      api.get(`/rooms/${id}`),
+      api.get(`/picks/room/${id}`),
+    ])
+      .then(([roomRes, picksRes]) => {
+        setRoom(roomRes.data);
+        setPicks(picksRes.data);
+      })
       .catch((err) => setError(err.response?.data?.error || 'Failed to load room'))
       .finally(() => setLoading(false));
   }, [id]);
@@ -30,6 +39,9 @@ export default function RoomPage() {
   const inviteLink = `${window.location.origin}/join/${room?.invite_code}`;
   const myMember = room?.members?.find((m) => m.user_id === user?.id);
   const needsStake = myMember && Number(myMember.stake) === 0;
+  const myPick = picks.find((p) => p.user_id === user?.id);
+  const gameStarted = room?.game_status !== 'scheduled';
+  const picksLocked = gameStarted || !!myPick;
 
   function handleCopy() {
     copyToClipboard(inviteLink);
@@ -56,6 +68,19 @@ export default function RoomPage() {
       setStakeError(err.response?.data?.error || 'Failed to update stake');
     } finally {
       setSavingStake(false);
+    }
+  }
+
+  async function handlePickSubmit(teamName) {
+    setSubmitting(true);
+    setPickError(null);
+    try {
+      const { data } = await api.post('/picks', { roomId: id, pickValue: teamName });
+      setPicks((prev) => [...prev.filter((p) => p.user_id !== user.id), data]);
+    } catch (err) {
+      setPickError(err.response?.data?.error || 'Failed to submit pick');
+    } finally {
+      setSubmitting(false);
     }
   }
 
@@ -128,6 +153,38 @@ export default function RoomPage() {
           </div>
         )}
 
+        {/* Pick submission */}
+        <div className="bg-white/5 border border-white/10 rounded-xl p-4">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-white/50 text-sm">Your pick</p>
+            {picksLocked && (
+              <span className="text-xs text-white/40 bg-white/5 border border-white/10 px-2 py-0.5 rounded">
+                {gameStarted ? 'Game started' : 'Pick locked'}
+              </span>
+            )}
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            {[room.away_team, room.home_team].map((team) => {
+              const selected = myPick?.pick_value === team;
+              return (
+                <button
+                  key={team}
+                  disabled={picksLocked || submitting}
+                  onClick={() => handlePickSubmit(team)}
+                  className={`py-3 px-4 rounded-xl font-semibold text-sm transition-colors
+                    ${selected
+                      ? 'bg-[#00ff87] text-[#0a0f1e]'
+                      : 'bg-white/5 border border-white/10 text-white hover:bg-white/10'}
+                    disabled:opacity-50 disabled:cursor-not-allowed`}
+                >
+                  {team}
+                </button>
+              );
+            })}
+          </div>
+          {pickError && <p className="text-red-400 text-sm mt-2">{pickError}</p>}
+        </div>
+
         {/* Invite link */}
         <div className="bg-white/5 border border-white/10 rounded-xl p-4">
           <p className="text-white/50 text-sm mb-2">Invite link</p>
@@ -144,26 +201,34 @@ export default function RoomPage() {
           </div>
         </div>
 
-        {/* Members */}
+        {/* Members + picks */}
         <div className="bg-white/5 border border-white/10 rounded-xl p-4">
           <p className="text-white/50 text-sm mb-3">Members ({room.members.length})</p>
           <div className="flex flex-col gap-2">
-            {room.members.map((m) => (
-              <div key={m.user_id} className="flex items-center justify-between py-2 border-b border-white/5 last:border-0">
-                <div className="flex items-center gap-2">
-                  <span className="font-medium">{m.username}</span>
-                  {m.user_id === user?.id && (
-                    <span className="text-xs text-white/30 bg-white/5 px-1.5 py-0.5 rounded">you</span>
-                  )}
-                  {m.user_id === room.created_by && (
-                    <span className="text-xs text-[#00ff87]/60 bg-[#00ff87]/10 px-1.5 py-0.5 rounded">host</span>
-                  )}
+            {room.members.map((m) => {
+              const memberPick = picks.find((p) => p.user_id === m.user_id);
+              return (
+                <div key={m.user_id} className="flex items-center justify-between py-2 border-b border-white/5 last:border-0">
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium">{m.username}</span>
+                    {m.user_id === user?.id && (
+                      <span className="text-xs text-white/30 bg-white/5 px-1.5 py-0.5 rounded">you</span>
+                    )}
+                    {m.user_id === room.created_by && (
+                      <span className="text-xs text-[#00ff87]/60 bg-[#00ff87]/10 px-1.5 py-0.5 rounded">host</span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className={`text-sm font-mono ${Number(m.stake) === 0 ? 'text-white/30' : 'text-white/70'}`}>
+                      {Number(m.stake) === 0 ? 'No stake' : `$${Number(m.stake).toFixed(2)}`}
+                    </span>
+                    <span className={`text-sm ${memberPick ? 'text-[#00ff87]' : 'text-white/30'}`}>
+                      {memberPick?.pick_value ?? (gameStarted ? 'No pick' : 'Waiting…')}
+                    </span>
+                  </div>
                 </div>
-                <span className={`text-sm font-mono ${Number(m.stake) === 0 ? 'text-white/30' : 'text-white/70'}`}>
-                  {Number(m.stake) === 0 ? 'No stake' : `$${Number(m.stake).toFixed(2)}`}
-                </span>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </main>
