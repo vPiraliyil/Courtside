@@ -49,8 +49,23 @@ export default function Leaderboard({ roomId, gameId, currentUserId }) {
 
   if (!data) {
     return (
-      <div className="bg-white/5 border border-white/10 rounded-xl p-6 text-center text-white/40 text-sm">
-        Loading leaderboard…
+      <div className="bg-gradient-to-b from-white/5 to-white/[0.02] border border-white/10 rounded-2xl p-5 animate-pulse">
+        <div className="flex items-center justify-between mb-4">
+          <div className="h-5 w-28 bg-white/10 rounded" />
+          <div className="h-5 w-24 bg-white/10 rounded-full" />
+        </div>
+        <div className="flex flex-col gap-2">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="flex items-center gap-4 px-4 py-3 rounded-xl bg-white/5 border border-white/10" style={{ height: ROW_HEIGHT }}>
+              <div className="h-7 w-7 bg-white/10 rounded" />
+              <div className="flex-1">
+                <div className="h-4 w-24 bg-white/10 rounded mb-2" />
+                <div className="h-3 w-32 bg-white/10 rounded" />
+              </div>
+              <div className="h-5 w-16 bg-white/10 rounded" />
+            </div>
+          ))}
+        </div>
       </div>
     );
   }
