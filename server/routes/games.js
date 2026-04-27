@@ -3,7 +3,7 @@ const pool = require('../db/index');
 const { syncTodaysGames } = require('../services/gameSync');
 const { pollOnce } = require('../services/pollService');
 const { evaluatePicks } = require('../services/picks');
-const { settleRoom } = require('../services/settlement');
+const { calculateSettlement, saveSettlement } = require('../services/settlement');
 const {
   broadcastScoreUpdate,
   broadcastGameFinished,
@@ -72,8 +72,9 @@ router.post('/admin/games/:id/simulate', async (req, res, next) => {
           [prev.id]
         );
         for (const r of roomRows) {
-          const transfers = await settleRoom(r.id);
-          broadcastSettlementReady(r.id, transfers);
+          const { transfers, noContestGames } = await calculateSettlement(r.id);
+          await saveSettlement(r.id, transfers);
+          broadcastSettlementReady(r.id, { transfers, noContestGames });
         }
       }
       broadcastGameFinished(prev.id, winner);

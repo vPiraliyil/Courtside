@@ -60,6 +60,7 @@ export default function RoomPage() {
     const onSettlement = ({ roomId, settlements }) => {
       if (roomId !== id) return;
       setSettlements(settlements);
+      navigate(`/rooms/${id}/settlement`);
     };
 
     socket.on('score:update', onScore);
@@ -197,16 +198,15 @@ export default function RoomPage() {
           </div>
         )}
 
-        {/* Settlement banner (placeholder until settlement screen is built) */}
-        {settlements && (
-          <div className="bg-white/5 border border-[#00ff87]/30 rounded-xl px-4 py-4">
-            <p className="text-[#00ff87] font-semibold mb-1">Settlement ready</p>
-            <p className="text-white/60 text-sm">
-              {settlements.length === 0
-                ? 'No transfers needed (no contest).'
-                : `${settlements.length} transfer${settlements.length === 1 ? '' : 's'} to settle the room.`}
-            </p>
-          </div>
+        {/* Settlement banner */}
+        {(settlements || room.game_status === 'finished') && (
+          <button
+            onClick={() => navigate(`/rooms/${id}/settlement`)}
+            className="w-full bg-[#00ff87]/10 border border-[#00ff87]/30 hover:bg-[#00ff87]/20 transition-colors rounded-xl px-4 py-4 text-left"
+          >
+            <p className="text-[#00ff87] font-semibold mb-1">Settlement ready →</p>
+            <p className="text-white/60 text-sm">View the final results and who pays who.</p>
+          </button>
         )}
 
         {/* Stake banner */}

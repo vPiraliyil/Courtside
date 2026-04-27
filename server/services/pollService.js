@@ -2,7 +2,7 @@ const cron = require('node-cron');
 const pool = require('../db/index');
 const { fetchTodaysGames } = require('./sportsApi');
 const { evaluatePicks } = require('./picks');
-const { settleRoom } = require('./settlement');
+const { calculateSettlement, saveSettlement } = require('./settlement');
 const {
   broadcastScoreUpdate,
   broadcastGameFinished,
@@ -66,8 +66,9 @@ async function pollOnce() {
             [prev.id]
           );
           for (const room of rooms) {
-            const transfers = await settleRoom(room.id);
-            broadcastSettlementReady(room.id, transfers);
+            const { transfers, noContestGames } = await calculateSettlement(room.id);
+            await saveSettlement(room.id, transfers);
+            broadcastSettlementReady(room.id, { transfers, noContestGames });
           }
         }
 

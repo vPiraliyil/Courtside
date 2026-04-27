@@ -9,6 +9,8 @@ const {
   updateStake,
 } = require('../services/rooms');
 const { calculateLeaderboard } = require('../services/leaderboard');
+const { calculateSettlement, getSavedSettlement } = require('../services/settlement');
+const pool = require('../db/index');
 
 const router = Router();
 
@@ -92,6 +94,40 @@ router.get('/:id/leaderboard', async (req, res, next) => {
       return next(err);
     }
     res.json(data);
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.get('/:id/settlement', async (req, res, next) => {
+  try {
+    const roomId = req.params.id;
+    const { rows: roomRows } = await pool.query(
+      `SELECT r.id, r.name, r.status, g.home_team, g.away_team, g.winner, g.status AS game_status
+       FROM rooms r JOIN games g ON g.id = r.game_id
+       WHERE r.id = $1`,
+      [roomId]
+    );
+    if (!roomRows.length) {
+      const err = new Error('Room not found');
+      err.status = 404;
+      return next(err);
+    }
+    const room = roomRows[0];
+
+    const { transfers: computedTransfers, noContestGames } = await calculateSettlement(roomId);
+    const savedTransfers = await getSavedSettlement(roomId);
+    const transfers = savedTransfers.length ? savedTransfers : computedTransfers;
+
+    const leaderboard = await calculateLeaderboard(roomId);
+
+    res.json({
+      room,
+      transfers,
+      noContestGames,
+      finalRanking: leaderboard?.members ?? [],
+      settled: room.status === 'settled',
+    });
   } catch (err) {
     next(err);
   }

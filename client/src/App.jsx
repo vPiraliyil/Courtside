@@ -6,6 +6,7 @@ import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import DashboardPage from './pages/DashboardPage';
 import RoomPage from './pages/RoomPage';
+import SettlementPage from './pages/SettlementPage';
 import JoinPage from './pages/JoinPage';
 
 export default function App() {
@@ -30,6 +31,14 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <RoomPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/rooms/:id/settlement"
+            element={
+              <ProtectedRoute>
+                <SettlementPage />
               </ProtectedRoute>
             }
           />
