@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useSocket } from '../context/SocketContext';
 import api from '../lib/api';
+import Leaderboard from '../components/Leaderboard';
 
 function copyToClipboard(text) {
   navigator.clipboard.writeText(text).catch(() => {});
@@ -265,6 +266,9 @@ export default function RoomPage() {
           </div>
           {pickError && <p className="text-red-400 text-sm mt-2">{pickError}</p>}
         </div>
+
+        {/* Leaderboard */}
+        <Leaderboard roomId={id} gameId={room.game_id} currentUserId={user?.id} />
 
         {/* Invite link */}
         <div className="bg-white/5 border border-white/10 rounded-xl p-4">

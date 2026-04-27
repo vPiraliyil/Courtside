@@ -8,6 +8,7 @@ const {
   getUserRooms,
   updateStake,
 } = require('../services/rooms');
+const { calculateLeaderboard } = require('../services/leaderboard');
 
 const router = Router();
 
@@ -77,6 +78,20 @@ router.patch('/:id/stake', async (req, res, next) => {
     }
     await updateStake(req.params.id, req.user.id, stake);
     res.json({ ok: true });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.get('/:id/leaderboard', async (req, res, next) => {
+  try {
+    const data = await calculateLeaderboard(req.params.id);
+    if (!data) {
+      const err = new Error('Room not found');
+      err.status = 404;
+      return next(err);
+    }
+    res.json(data);
   } catch (err) {
     next(err);
   }
