@@ -2,12 +2,14 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../lib/api';
 import Navbar from '../components/Navbar';
+import Avatar from '../components/Avatar';
+import TeamLogo from '../components/TeamLogo';
 
 function StatusBadge({ status }) {
   const styles = {
-    live:      'bg-[#00ff87]/20 text-[#00ff87] border border-[#00ff87]/40',
-    scheduled: 'bg-white/10 text-white/60 border border-white/20',
-    finished:  'bg-white/5 text-white/40 border border-white/10',
+    live:      'bg-[#FF3B3B]/15 text-[#FF3B3B] border border-[#FF3B3B]/35',
+    scheduled: 'bg-white/[0.07] text-white/50 border border-white/[0.12]',
+    finished:  'bg-white/[0.04] text-white/30 border border-white/[0.08]',
   };
   const labels = { live: 'Live', scheduled: 'Scheduled', finished: 'Final' };
   return (
@@ -19,7 +21,7 @@ function StatusBadge({ status }) {
 
 function GameCardSkeleton() {
   return (
-    <div className="bg-white/5 border border-white/10 rounded-xl p-4 animate-pulse">
+    <div className="bg-white/[0.04] border border-white/[0.08] rounded-2xl p-4 animate-pulse">
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-3 min-w-0 flex-1">
           <div className="h-5 w-24 bg-white/10 rounded" />
@@ -29,7 +31,7 @@ function GameCardSkeleton() {
         <div className="h-5 w-16 bg-white/10 rounded-full flex-shrink-0" />
       </div>
       <div className="mt-3 flex items-center justify-between">
-        <div className="h-4 w-16 bg-white/10 rounded" />
+        <div className="h-4 w-14 bg-white/10 rounded" />
         <div className="h-7 w-24 bg-white/10 rounded-lg" />
       </div>
     </div>
@@ -38,7 +40,7 @@ function GameCardSkeleton() {
 
 function RoomCardSkeleton() {
   return (
-    <div className="bg-white/5 border border-white/10 rounded-xl p-4 animate-pulse">
+    <div className="bg-white/[0.04] border border-white/[0.08] rounded-2xl p-4 animate-pulse">
       <div className="flex items-center justify-between gap-3">
         <div className="h-5 w-32 bg-white/10 rounded" />
         <div className="h-5 w-16 bg-white/10 rounded-full flex-shrink-0" />
@@ -73,21 +75,25 @@ function CreateRoomModal({ game, onClose, onCreated }) {
 
   return (
     <div
-      className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4"
+      className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4"
       onClick={onClose}
     >
       <div
-        className="bg-[#0f1629] border border-white/10 rounded-2xl p-6 w-full max-w-md"
+        className="bg-[#111111] border border-white/[0.10] rounded-3xl p-6 w-full max-w-md"
         onClick={(e) => e.stopPropagation()}
       >
-        <h3 className="text-lg font-bold text-white mb-1">Create a Room</h3>
-        <p className="text-white/40 text-sm mb-6">
-          {game.away_team} @ {game.home_team}
-        </p>
+        <h3 className="font-display text-2xl tracking-wide text-white mb-1">Create a Room</h3>
+        <div className="flex items-center gap-2 text-white/35 text-sm mb-6 flex-wrap">
+          <TeamLogo teamName={game.away_team} size={18} />
+          <span>{game.away_team}</span>
+          <span>@</span>
+          <TeamLogo teamName={game.home_team} size={18} />
+          <span>{game.home_team}</span>
+        </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div>
-            <label className="block text-sm text-white/60 mb-2" htmlFor="room-name">Room name</label>
+            <label className="block text-white/50 text-xs uppercase tracking-wider mb-2" htmlFor="room-name">Room name</label>
             <input
               id="room-name"
               autoFocus
@@ -96,28 +102,28 @@ function CreateRoomModal({ game, onClose, onCreated }) {
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g. Friday Night Picks"
               maxLength={100}
-              className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white placeholder-white/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#00ff87]/60 focus:border-[#00ff87]/50 transition-colors"
+              className="w-full bg-white/[0.06] border border-white/[0.10] rounded-xl px-4 py-2.5 text-white placeholder-white/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#00FF87]/50 focus:border-[#00FF87]/40 transition-colors"
             />
           </div>
 
           {error && (
-            <div className="bg-red-500/10 border border-red-500/30 text-red-400 rounded-lg px-4 py-2 text-sm">
+            <div className="bg-[#FF3B3B]/10 border border-[#FF3B3B]/30 text-[#FF3B3B] rounded-xl px-4 py-2 text-sm">
               {error}
             </div>
           )}
 
-          <div className="flex gap-3 pt-2">
+          <div className="flex gap-3 pt-1">
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 bg-white/10 text-white py-2 rounded-lg hover:bg-white/15 active:bg-white/20 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#00ff87]/60"
+              className="flex-1 bg-white/[0.07] text-white py-2.5 rounded-xl hover:bg-white/[0.11] active:bg-white/[0.15] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#00FF87]/50"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={creating || !name.trim()}
-              className="flex-1 bg-[#00ff87] text-[#0a0f1e] font-semibold py-2 rounded-lg hover:bg-[#00e87a] active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-[#00ff87]/60"
+              className="flex-1 bg-[#00FF87] text-[#080808] font-semibold py-2.5 rounded-xl hover:bg-[#00e87a] active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-[#00FF87]/50"
             >
               {creating ? 'Creating…' : 'Create'}
             </button>
@@ -155,7 +161,7 @@ export default function DashboardPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#0a0f1e] text-white">
+    <div className="min-h-screen bg-[#080808] text-white">
       <Navbar />
 
       <main className="max-w-2xl mx-auto px-4 sm:px-6 py-6 sm:py-8 flex flex-col gap-10">
@@ -163,14 +169,14 @@ export default function DashboardPage() {
         {/* My Rooms */}
         {(roomsLoading || roomsError || myRooms.length > 0) && (
           <section>
-            <h2 className="text-2xl font-bold mb-4">My Rooms</h2>
+            <h2 className="font-display text-3xl tracking-wide mb-4">My Rooms</h2>
             {roomsLoading && (
               <div className="flex flex-col gap-3">
                 {[1, 2].map((i) => <RoomCardSkeleton key={i} />)}
               </div>
             )}
             {roomsError && !roomsLoading && (
-              <div className="bg-red-500/10 border border-red-500/30 text-red-400 rounded-xl px-4 py-3 text-sm">
+              <div className="bg-[#FF3B3B]/10 border border-[#FF3B3B]/30 text-[#FF3B3B] rounded-2xl px-4 py-3 text-sm">
                 {roomsError}
               </div>
             )}
@@ -180,16 +186,20 @@ export default function DashboardPage() {
                   <button
                     key={room.id}
                     onClick={() => navigate(`/rooms/${room.id}`)}
-                    className="bg-white/5 border border-white/10 rounded-xl p-4 text-left hover:bg-white/[0.08] active:bg-white/10 transition-colors w-full focus:outline-none focus-visible:ring-2 focus-visible:ring-[#00ff87]/60"
+                    className="bg-white/[0.04] border border-white/[0.08] rounded-2xl p-4 text-left hover:bg-white/[0.07] active:bg-white/[0.09] transition-colors w-full focus:outline-none focus-visible:ring-2 focus-visible:ring-[#00FF87]/50"
                   >
                     <div className="flex items-center justify-between gap-3">
                       <span className="font-semibold truncate">{room.name}</span>
                       <StatusBadge status={room.game_status} />
                     </div>
-                    <div className="mt-1.5 flex items-center gap-2 text-sm text-white/40 truncate">
-                      <span className="truncate">{room.away_team} @ {room.home_team}</span>
-                      <span>·</span>
-                      <span className="whitespace-nowrap">{room.member_count} {room.member_count === 1 ? 'member' : 'members'}</span>
+                    <div className="mt-1.5 flex items-center gap-2 text-sm text-white/35">
+                      <TeamLogo teamName={room.away_team} size={16} />
+                      <span className="truncate">{room.away_team}</span>
+                      <span className="flex-shrink-0">@</span>
+                      <TeamLogo teamName={room.home_team} size={16} />
+                      <span className="truncate">{room.home_team}</span>
+                      <span className="flex-shrink-0">·</span>
+                      <span className="whitespace-nowrap flex-shrink-0">{room.member_count} {room.member_count === 1 ? 'member' : 'members'}</span>
                     </div>
                   </button>
                 ))}
@@ -200,7 +210,7 @@ export default function DashboardPage() {
 
         {/* Today's Games */}
         <section>
-          <h2 className="text-2xl font-bold mb-4">Today's Games</h2>
+          <h2 className="font-display text-3xl tracking-wide mb-4">Today's Games</h2>
 
           {gamesLoading && (
             <div className="flex flex-col gap-3">
@@ -209,30 +219,32 @@ export default function DashboardPage() {
           )}
 
           {gamesError && !gamesLoading && (
-            <div className="bg-red-500/10 border border-red-500/30 text-red-400 rounded-xl px-4 py-3 text-sm">
+            <div className="bg-[#FF3B3B]/10 border border-[#FF3B3B]/30 text-[#FF3B3B] rounded-2xl px-4 py-3 text-sm">
               {gamesError}
             </div>
           )}
 
           {!gamesLoading && !gamesError && games.length === 0 && (
-            <div className="bg-white/[0.03] border border-white/10 rounded-2xl flex flex-col items-center justify-center py-16 px-6 text-center text-white/50">
+            <div className="bg-white/[0.02] border border-white/[0.07] rounded-3xl flex flex-col items-center justify-center py-16 px-6 text-center">
               <span className="text-5xl mb-4" aria-hidden>🏀</span>
-              <p className="text-lg font-medium text-white">No NBA games scheduled today.</p>
-              <p className="text-sm mt-1 text-white/40">Check back tomorrow.</p>
+              <p className="font-display text-2xl tracking-wide text-white">No NBA games scheduled today.</p>
+              <p className="text-sm mt-2 text-white/30">Check back tomorrow.</p>
             </div>
           )}
 
           {!gamesLoading && !gamesError && games.length > 0 && (
             <div className="flex flex-col gap-3">
               {games.map((game) => (
-                <div key={game.id} className="bg-white/5 border border-white/10 rounded-xl p-4">
+                <div key={game.id} className="bg-white/[0.04] border border-white/[0.08] rounded-2xl p-4">
                   <div className="flex items-center justify-between gap-3 flex-wrap">
                     <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+                      <TeamLogo teamName={game.away_team} size={20} />
                       <span className="font-semibold truncate">{game.away_team}</span>
-                      <span className="text-white/40 text-sm">@</span>
+                      <span className="text-white/30 text-sm">@</span>
+                      <TeamLogo teamName={game.home_team} size={20} />
                       <span className="font-semibold truncate">{game.home_team}</span>
                       {game.status !== 'scheduled' && (
-                        <span className="text-white/60 text-sm font-mono whitespace-nowrap">
+                        <span className="text-white/40 text-sm font-mono whitespace-nowrap">
                           {game.away_score} – {game.home_score}
                         </span>
                       )}
@@ -240,13 +252,13 @@ export default function DashboardPage() {
                     <StatusBadge status={game.status} />
                   </div>
                   <div className="mt-3 flex items-center justify-between gap-3">
-                    <span className="text-white/40 text-sm">
-                      {game.status === 'scheduled' ? formatTime(game.starts_at) : ' '}
+                    <span className="text-white/30 text-sm">
+                      {game.status === 'scheduled' ? formatTime(game.starts_at) : ' '}
                     </span>
                     {game.status === 'scheduled' && (
                       <button
                         onClick={() => setModalGame(game)}
-                        className="bg-[#00ff87] text-[#0a0f1e] text-sm font-semibold px-4 py-1.5 rounded-lg hover:bg-[#00e87a] active:scale-[0.97] transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[#00ff87]/60"
+                        className="bg-[#00FF87] text-[#080808] text-sm font-semibold px-4 py-1.5 rounded-lg hover:bg-[#00e87a] active:scale-[0.97] transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[#00FF87]/50"
                       >
                         Create Room
                       </button>

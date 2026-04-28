@@ -83,6 +83,10 @@ async function calculateLeaderboard(roomId) {
     projectedWinner,
     noContest,
     members: ranked,
+    awayTeam: game.away_team,
+    homeTeam: game.home_team,
+    awayScore: game.away_score,
+    homeScore: game.home_score,
   };
 }
 
