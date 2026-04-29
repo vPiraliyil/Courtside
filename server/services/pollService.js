@@ -76,7 +76,7 @@ async function pollOnce() {
       }
     }
   } catch (err) {
-    console.error('pollOnce error:', err.message);
+    console.error('[pollService] poll failed:', err);
   } finally {
     running = false;
   }
