@@ -16,7 +16,9 @@
       "Bash(taskkill //PID 37464 //F)",
       "Bash(node -e \"require\\('./services/settlement'\\); require\\('./services/pollService'\\); require\\('./routes/rooms'\\); require\\('./routes/games'\\); console.log\\('OK'\\);\")",
       "Bash(npx vite *)",
-      "Bash(git add *)"
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)"
     ]
   }
 }

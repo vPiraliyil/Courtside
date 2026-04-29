@@ -12,6 +12,7 @@ const roomRoutes = require('./routes/rooms');
 const pickRoutes = require('./routes/picks');
 const socketService = require('./services/socketService');
 const { startPolling } = require('./services/pollService');
+const { startDailySync } = require('./services/gameSync');
 
 const app = express();
 const httpServer = createServer(app);
@@ -75,6 +76,7 @@ const PORT = process.env.PORT || 3001;
 httpServer.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
   startPolling();
+  startDailySync();
 });
 
 module.exports = { app, io };
