@@ -9,6 +9,7 @@ export default function LandingPage() {
   const bodyRef = useRef(null);
 
   useEffect(() => {
+    if (loading || user) return;
     document.title = 'Courtside — Pick\'em with friends';
     anime({
       targets: heroRef.current,
@@ -25,7 +26,7 @@ export default function LandingPage() {
       delay: 180,
       easing: 'easeOutCubic',
     });
-  }, []);
+  }, [loading]);
 
   if (loading) return null;
   if (user) return <Navigate to="/dashboard" replace />;
