@@ -12,7 +12,16 @@ const {
 
 const router = Router();
 
-router.post('/admin/sync-games', async (req, res, next) => {
+function requireAdminKey(req, res, next) {
+  const expected = process.env.ADMIN_KEY;
+  const provided = req.headers.authorization?.replace('Bearer ', '');
+  if (!expected || provided !== expected) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  next();
+}
+
+router.post('/admin/sync-games', requireAdminKey, async (req, res, next) => {
   try {
     const count = await syncTodaysGames();
     res.json({ synced: count });
@@ -21,7 +30,7 @@ router.post('/admin/sync-games', async (req, res, next) => {
   }
 });
 
-router.post('/admin/poll-tick', async (req, res, next) => {
+router.post('/admin/poll-tick', requireAdminKey, async (req, res, next) => {
   try {
     await pollOnce();
     res.json({ ok: true });
@@ -32,7 +41,7 @@ router.post('/admin/poll-tick', async (req, res, next) => {
 
 // Dev-only: simulate score / status changes without depending on live NBA games.
 // Body: { homeScore?, awayScore?, status?: 'scheduled'|'live'|'finished' }
-router.post('/admin/games/:id/simulate', async (req, res, next) => {
+router.post('/admin/games/:id/simulate', requireAdminKey, async (req, res, next) => {
   try {
     const { homeScore, awayScore, status } = req.body;
     const { rows } = await pool.query(
