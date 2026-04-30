@@ -66,7 +66,7 @@ Courtside is a real-time social pick'em app for friend groups. Create a private 
 ### 1. Clone the repo
 
 ```bash
-git clone https://github.com/yourusername/courtside.git
+git clone https://github.com/vPiraliyil/Courtside
 cd courtside
 ```
 
