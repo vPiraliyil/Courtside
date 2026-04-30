@@ -113,14 +113,22 @@ export default function RoomPage() {
       setSettlements(true);
       navigate(`/rooms/${id}/settlement`);
     };
+    const onMemberJoined = ({ userId, username, stake }) => {
+      setRoom((prev) => {
+        if (!prev || prev.members.some((m) => m.user_id === userId)) return prev;
+        return { ...prev, members: [...prev.members, { user_id: userId, username, stake }] };
+      });
+    };
 
     socket.on('score:update', onScore);
     socket.on('game:finished', onFinished);
     socket.on('settlement:ready', onSettlement);
+    socket.on('member:joined', onMemberJoined);
     return () => {
       socket.off('score:update', onScore);
       socket.off('game:finished', onFinished);
       socket.off('settlement:ready', onSettlement);
+      socket.off('member:joined', onMemberJoined);
       socket.emit('leave:room', { roomId: id });
     };
   }, [socket, room?.game_id, id, navigate]);

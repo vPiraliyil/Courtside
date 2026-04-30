@@ -19,4 +19,9 @@ function broadcastSettlementReady(roomId, settlements) {
   ioRef.to(`room:${roomId}`).emit('settlement:ready', { roomId, settlements });
 }
 
-module.exports = { init, broadcastScoreUpdate, broadcastGameFinished, broadcastSettlementReady };
+function broadcastMemberJoined(roomId, member) {
+  if (!ioRef) return;
+  ioRef.to(`room:${roomId}`).emit('member:joined', member);
+}
+
+module.exports = { init, broadcastScoreUpdate, broadcastGameFinished, broadcastSettlementReady, broadcastMemberJoined };

@@ -10,6 +10,7 @@ const {
 } = require('../services/rooms');
 const { calculateLeaderboard } = require('../services/leaderboard');
 const { calculateSettlement, getSavedSettlement } = require('../services/settlement');
+const { broadcastMemberJoined } = require('../services/socketService');
 const pool = require('../db/index');
 
 const router = Router();
@@ -64,6 +65,7 @@ router.post('/join', async (req, res, next) => {
       return next(err);
     }
     const room = await joinRoom(req.user.id, inviteCode, stake);
+    broadcastMemberJoined(room.id, { userId: req.user.id, username: req.user.username, stake });
     res.json(room);
   } catch (err) {
     next(err);
