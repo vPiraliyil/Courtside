@@ -37,15 +37,15 @@ async function syncLiveGames() {
 const cron = require('node-cron');
 
 function startDailySync() {
-  cron.schedule('0 8 * * *', async () => {
+  cron.schedule('*/30 * * * *', async () => {
     try {
       const n = await syncTodaysGames();
-      console.log(`[gameSync] daily sync complete — ${n} games synced`);
+      console.log(`[gameSync] sync complete — ${n} games synced`);
     } catch (err) {
-      console.error('[gameSync] daily sync failed:', err);
+      console.error('[gameSync] sync failed:', err);
     }
-  }, { timezone: 'America/New_York' });
-  console.log('[gameSync] daily sync scheduled at 08:00 America/New_York');
+  });
+  console.log('[gameSync] game sync scheduled every 30 minutes');
 }
 
 module.exports = { syncTodaysGames, syncLiveGames, startDailySync };
