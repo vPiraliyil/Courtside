@@ -45,11 +45,7 @@ export default function App() {
           />
           <Route
             path="/join/:inviteCode"
-            element={
-              <ProtectedRoute>
-                <JoinPage />
-              </ProtectedRoute>
-            }
+            element={<JoinPage />}
           />
         </Routes>
         </SocketProvider>

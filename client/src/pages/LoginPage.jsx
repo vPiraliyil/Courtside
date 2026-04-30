@@ -34,8 +34,8 @@ export default function LoginPage() {
     setError('');
     setLoading(true);
     try {
-      await login(form.email, form.password);
-      navigate(from, { replace: true });
+      const pendingInvite = await login(form.email, form.password);
+      navigate(pendingInvite || from, { replace: true });
     } catch (err) {
       setError(err.response?.data?.error || 'Invalid email or password');
     } finally {

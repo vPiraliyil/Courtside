@@ -37,6 +37,12 @@ export function AuthProvider({ children }) {
     localStorage.setItem('token', data.access);
     setToken(data.access);
     setUser(data.user);
+    const pending = localStorage.getItem('pendingInvite');
+    if (pending) {
+      localStorage.removeItem('pendingInvite');
+      return pending;
+    }
+    return null;
   }
 
   async function register(username, email, password) {
@@ -44,6 +50,12 @@ export function AuthProvider({ children }) {
     localStorage.setItem('token', data.access);
     setToken(data.access);
     setUser(data.user);
+    const pending = localStorage.getItem('pendingInvite');
+    if (pending) {
+      localStorage.removeItem('pendingInvite');
+      return pending;
+    }
+    return null;
   }
 
   function logout() {

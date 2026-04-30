@@ -29,7 +29,7 @@ function JoinSkeleton() {
 
 export default function JoinPage() {
   const { inviteCode } = useParams();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
 
   const [room, setRoom] = useState(null);
@@ -48,10 +48,16 @@ export default function JoinPage() {
   }, [room]);
 
   useEffect(() => {
+    if (authLoading) return;
+    if (!user) {
+      localStorage.setItem('pendingInvite', `/join/${inviteCode}`);
+      navigate('/login', { replace: true });
+      return;
+    }
     api.get(`/rooms/invite/${inviteCode}`)
       .then((res) => {
         const data = res.data;
-        if (data.members?.some((m) => m.user_id === user?.id)) {
+        if (data.members?.some((m) => m.user_id === user.id)) {
           navigate(`/rooms/${data.id}`, { replace: true });
           return;
         }
@@ -59,7 +65,7 @@ export default function JoinPage() {
       })
       .catch((err) => setError(err.response?.data?.error || 'Room not found'))
       .finally(() => setLoading(false));
-  }, [inviteCode, user]);
+  }, [inviteCode, user, authLoading]);
 
   async function handleJoin(e) {
     e.preventDefault();

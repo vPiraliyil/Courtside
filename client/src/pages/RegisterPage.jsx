@@ -34,8 +34,8 @@ export default function RegisterPage() {
     setError('');
     setLoading(true);
     try {
-      await register(form.username, form.email, form.password);
-      navigate(from, { replace: true });
+      const pendingInvite = await register(form.username, form.email, form.password);
+      navigate(pendingInvite || from, { replace: true });
     } catch (err) {
       setError(err.response?.data?.error || 'Registration failed');
     } finally {
